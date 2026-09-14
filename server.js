@@ -1,5 +1,5 @@
 const express=require("express"),cors=require("cors"),fs=require("fs"),path=require("path");
-const app=express(),PORT=3000,FILE=path.join(__dirname,"data","bookings.json");
+const app=express(),PORT=process.env.PORT||3000,FILE=path.join(__dirname,"data","bookings.json");
 app.use(cors()); app.use(express.json()); app.use(express.static(path.join(__dirname,"public")));
 const read=()=>{try{return JSON.parse(fs.readFileSync(FILE,"utf8"))}catch{return[]}};
 const save=x=>fs.writeFileSync(FILE,JSON.stringify(x,null,2));
