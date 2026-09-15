@@ -1,6 +1,545 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NIRAMAY Admin</title>
-<style>body{font-family:Segoe UI,Arial;margin:0;background:#f5faf8;color:#15352f}header{background:#0b6b57;color:white;padding:22px 5%}main{width:92%;max-width:1200px;margin:30px auto}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.card{background:white;padding:20px;border-radius:14px;border:1px solid #dce9e5}.num{font-size:28px;font-weight:800;color:#0b6b57}.wrap{overflow:auto;margin-top:25px}table{width:100%;border-collapse:collapse;background:white}th,td{padding:13px;border-bottom:1px solid #e4eeeb;text-align:left}th{background:#eaf8f3}select{padding:7px}@media(max-width:700px){.cards{grid-template-columns:1fr 1fr}}</style></head>
-<body><header><b>NIRAMAY</b> — Diagnostic Centre Admin</header><main><div class="cards">
-<div class="card"><div class="num" id="t">0</div>Total</div><div class="card"><div class="num" id="p">0</div>Pending</div><div class="card"><div class="num" id="c">0</div>Confirmed</div><div class="card"><div class="num" id="d">0</div>Completed</div></div>
-<div class="wrap"><table><thead><tr><th>ID</th><th>Patient</th><th>Test</th><th>Date/Time</th><th>Collection</th><th>Status</th></tr></thead><tbody id="rows"></tbody></table></div></main>
-<script>async function load(){let a=await(await fetch("/api/bookings")).json();t.textContent=a.length;p.textContent=a.filter(x=>x.status=="Pending").length;c.textContent=a.filter(x=>x.status=="Confirmed").length;d.textContent=a.filter(x=>x.status=="Completed").length;rows.innerHTML=a.length?a.map(x=>`<tr><td>${x.id}</td><td>${x.name}<br>${x.phone}</td><td>${x.service}</td><td>${x.date}<br>${x.time}</td><td>${x.collection||""}</td><td><select onchange="setStatus('${x.id}',this.value)">${["Pending","Confirmed","Completed","Cancelled"].map(s=>`<option ${s==x.status?"selected":""}>${s}</option>`).join("")}</select></td></tr>`).join(""):`<tr><td colspan="6">No bookings yet.</td></tr>`}async function setStatus(id,status){await fetch("/api/bookings/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status})});load()}load();setInterval(load,10000)</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>NIRAMAY Admin Login</title>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    font-family:Segoe UI,Arial,sans-serif;
+    background:linear-gradient(135deg,#eaf8f5,#f5fbfa);
+    color:#153f3a;
+    min-height:100vh;
+}
+
+/* LOGIN */
+#loginPage{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+}
+
+.login-box{
+    width:100%;
+    max-width:420px;
+    background:white;
+    padding:40px;
+    border-radius:20px;
+    box-shadow:0 15px 45px rgba(0,80,70,.15);
+}
+
+.logo{
+    text-align:center;
+    font-size:28px;
+    font-weight:700;
+    color:#087f68;
+    margin-bottom:5px;
+}
+
+.subtitle{
+    text-align:center;
+    color:#6b7f7b;
+    margin-bottom:30px;
+}
+
+label{
+    display:block;
+    margin:15px 0 7px;
+    font-weight:600;
+}
+
+input{
+    width:100%;
+    padding:13px;
+    border:1px solid #cddbd8;
+    border-radius:10px;
+    font-size:15px;
+    outline:none;
+}
+
+input:focus{
+    border-color:#087f68;
+}
+
+button{
+    border:none;
+    cursor:pointer;
+}
+
+.login-btn{
+    width:100%;
+    margin-top:25px;
+    padding:14px;
+    border-radius:10px;
+    background:#087f68;
+    color:white;
+    font-size:16px;
+    font-weight:600;
+}
+
+.login-btn:hover{
+    background:#066b59;
+}
+
+#error{
+    display:none;
+    margin-top:15px;
+    padding:10px;
+    border-radius:8px;
+    background:#ffe8e8;
+    color:#b42318;
+    text-align:center;
+}
+
+/* DASHBOARD */
+#dashboard{
+    display:none;
+}
+
+header{
+    background:#087f68;
+    color:white;
+    padding:22px 6%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+header h1{
+    margin:0;
+    font-size:24px;
+}
+
+.logout{
+    background:white;
+    color:#087f68;
+    padding:9px 16px;
+    border-radius:8px;
+    font-weight:600;
+}
+
+.wrap{
+    max-width:1200px;
+    margin:30px auto;
+    padding:0 20px;
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:18px;
+    margin-bottom:30px;
+}
+
+.card{
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 5px 20px rgba(0,80,70,.08);
+}
+
+.num{
+    font-size:32px;
+    font-weight:700;
+    color:#087f68;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    border-radius:15px;
+    overflow:hidden;
+}
+
+th,td{
+    padding:15px;
+    text-align:left;
+    border-bottom:1px solid #e4eeee;
+}
+
+th{
+    background:#e5f5f1;
+}
+
+select{
+    padding:8px;
+    border-radius:7px;
+}
+
+@media(max-width:800px){
+    .cards{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    table{
+        font-size:13px;
+    }
+}
+
+@media(max-width:500px){
+    .cards{
+        grid-template-columns:1fr;
+    }
+
+    .login-box{
+        padding:25px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage">
+
+    <div class="login-box">
+
+        <div class="logo">NIRAMAY</div>
+
+        <div class="subtitle">
+            Diagnostic Centre — Admin Portal
+        </div>
+
+        <label>Username</label>
+        <input
+            type="text"
+            id="username"
+            placeholder="Enter admin username"
+            autocomplete="username"
+        >
+
+        <label>Password</label>
+        <input
+            type="password"
+            id="password"
+            placeholder="Enter admin password"
+            autocomplete="current-password"
+        >
+
+        <button class="login-btn" onclick="login()">
+            Login to Dashboard
+        </button>
+
+        <div id="error">
+            Invalid username or password
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+
+<header>
+    <h1>NIRAMAY — Diagnostic Centre Admin</h1>
+
+    <button class="logout" onclick="logout()">
+        Logout
+    </button>
+</header>
+
+<main class="wrap">
+
+    <div class="cards">
+
+        <div class="card">
+            <div class="num" id="total">0</div>
+            <div>Total Bookings</div>
+        </div>
+
+        <div class="card">
+            <div class="num" id="pending">0</div>
+            <div>Pending</div>
+        </div>
+
+        <div class="card">
+            <div class="num" id="confirmed">0</div>
+            <div>Confirmed</div>
+        </div>
+
+        <div class="card">
+            <div class="num" id="completed">0</div>
+            <div>Completed</div>
+        </div>
+
+    </div>
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Patient</th>
+                <th>Test</th>
+                <th>Date/Time</th>
+                <th>Collection</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody id="bookingTable"></tbody>
+
+    </table>
+
+</main>
+
+</div>
+
+
+<script>
+
+const API = "/api";
+
+
+/* LOGIN */
+
+async function login(){
+
+    const username =
+        document.getElementById("username").value.trim();
+
+    const password =
+        document.getElementById("password").value;
+
+    const error =
+        document.getElementById("error");
+
+    error.style.display = "none";
+
+    if(!username || !password){
+        error.textContent = "Please enter username and password";
+        error.style.display = "block";
+        return;
+    }
+
+    try{
+
+        const response = await fetch(
+            API + "/admin/login",
+            {
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({
+                    username,
+                    password
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if(!response.ok){
+            throw new Error(data.message || "Login failed");
+        }
+
+        sessionStorage.setItem(
+            "niramay_admin_token",
+            data.token
+        );
+
+        showDashboard();
+
+    }catch(err){
+
+        error.textContent =
+            err.message || "Invalid username or password";
+
+        error.style.display = "block";
+    }
+}
+
+
+/* SHOW DASHBOARD */
+
+function showDashboard(){
+
+    document.getElementById("loginPage").style.display = "none";
+
+    document.getElementById("dashboard").style.display = "block";
+
+    loadBookings();
+}
+
+
+/* LOAD BOOKINGS */
+
+async function loadBookings(){
+
+    const token =
+        sessionStorage.getItem("niramay_admin_token");
+
+    if(!token){
+        logout();
+        return;
+    }
+
+    try{
+
+        const response = await fetch(
+            API + "/bookings",
+            {
+                headers:{
+                    "Authorization":"Bearer " + token
+                }
+            }
+        );
+
+        if(response.status === 401){
+            logout();
+            return;
+        }
+
+        const bookings = await response.json();
+
+        renderBookings(bookings);
+
+    }catch(err){
+
+        console.error(err);
+        alert("Could not load bookings.");
+    }
+}
+
+
+/* DISPLAY BOOKINGS */
+
+function renderBookings(bookings){
+
+    document.getElementById("total").textContent =
+        bookings.length;
+
+    document.getElementById("pending").textContent =
+        bookings.filter(x => x.status === "Pending").length;
+
+    document.getElementById("confirmed").textContent =
+        bookings.filter(x => x.status === "Confirmed").length;
+
+    document.getElementById("completed").textContent =
+        bookings.filter(x => x.status === "Completed").length;
+
+
+    const table =
+        document.getElementById("bookingTable");
+
+    table.innerHTML = "";
+
+
+    bookings.forEach(b => {
+
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${b.id || ""}</td>
+
+            <td>
+                ${b.name || ""}<br>
+                ${b.phone || ""}
+            </td>
+
+            <td>${b.service || ""}</td>
+
+            <td>
+                ${b.date || ""}<br>
+                ${b.time || ""}
+            </td>
+
+            <td>${b.collection || ""}</td>
+
+            <td>
+                <select onchange="updateStatus('${b.id}', this.value)">
+                    ${["Pending","Confirmed","Completed","Cancelled"]
+                    .map(s =>
+                        `<option value="${s}"
+                        ${b.status === s ? "selected" : ""}>
+                        ${s}
+                        </option>`
+                    ).join("")}
+                </select>
+            </td>
+        `;
+
+        table.appendChild(row);
+    });
+}
+
+
+/* UPDATE STATUS */
+
+async function updateStatus(id,status){
+
+    const token =
+        sessionStorage.getItem("niramay_admin_token");
+
+    try{
+
+        const response = await fetch(
+            API + "/bookings/" + id,
+            {
+                method:"PATCH",
+                headers:{
+                    "Content-Type":"application/json",
+                    "Authorization":"Bearer " + token
+                },
+                body:JSON.stringify({status})
+            }
+        );
+
+        if(response.status === 401){
+            logout();
+            return;
+        }
+
+        if(!response.ok){
+            throw new Error("Status update failed");
+        }
+
+        loadBookings();
+
+    }catch(err){
+
+        alert(err.message);
+    }
+}
+
+
+/* LOGOUT */
+
+function logout(){
+
+    sessionStorage.removeItem("niramay_admin_token");
+
+    document.getElementById("dashboard").style.display = "none";
+
+    document.getElementById("loginPage").style.display = "flex";
+
+    document.getElementById("password").value = "";
+}
+
+
+/* CHECK EXISTING SESSION */
+
+if(sessionStorage.getItem("niramay_admin_token")){
+
+    showDashboard();
+
+}
+
+</script>
+
+</body>
+</html>
