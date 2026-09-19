@@ -470,6 +470,20 @@ function renderBookings(bookings){
                         </option>`
                     ).join("")}
                 </select>
+                <button
+    onclick="deleteBooking('${b.id}')"
+    style="
+        margin-top:8px;
+        background:#dc2626;
+        color:white;
+        border:none;
+        padding:7px 12px;
+        border-radius:6px;
+        cursor:pointer;
+    "
+>
+    🗑 Delete
+</button>
             </td>
         `;
 
@@ -515,7 +529,44 @@ async function updateStatus(id,status){
         alert(err.message);
     }
 }
+async function deleteBooking(id) {
+    const confirmed = confirm(
+        "Are you sure you want to permanently delete this booking?"
+    );
 
+    if (!confirmed) {
+        return;
+    }
+
+    const token = sessionStorage.getItem("niramay_admin_token");
+
+    try {
+        const response = await fetch(
+            API + "/bookings/" + id,
+            {
+                method: "DELETE",
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.message || "Unable to delete booking");
+            return;
+        }
+
+        alert("Booking deleted successfully.");
+
+        loadBookings();
+
+    } catch (error) {
+        console.error(error);
+        alert("Server error. Please try again.");
+    }
+}
 
 /* LOGOUT */
 

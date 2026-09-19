@@ -338,6 +338,40 @@ app.patch("/api/bookings/:id", adminAuth, async (req, res) => {
 });
 
 /* =========================
+   DELETE BOOKING — ADMIN ONLY
+========================= */
+
+app.delete("/api/bookings/:id", adminAuth, async (req, res) => {
+    try {
+        const result = await pool.query(
+            `
+            DELETE FROM bookings
+            WHERE id = $1
+            RETURNING id
+            `,
+            [req.params.id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                message: "Booking not found"
+            });
+        }
+
+        res.json({
+            message: "Booking deleted successfully",
+            id: result.rows[0].id
+        });
+
+    } catch (error) {
+        console.error("Delete booking error:", error);
+
+        res.status(500).json({
+            message: "Unable to delete booking"
+        });
+    }
+});
+/* =========================
    START SERVER
 ========================= */
 
